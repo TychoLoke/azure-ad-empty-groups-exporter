@@ -1,23 +1,21 @@
 <#
 .SYNOPSIS
-    Fetches all empty groups from Microsoft Entra ID (Azure AD) and exports them to a CSV file.
+    Fetches all empty groups from Microsoft Entra ID (Azure AD), categorizes them, and exports them to a CSV file.
+    Includes information about whether the group is on-premises or cloud-only.
 
 .DESCRIPTION
-    This script uses the Microsoft Graph PowerShell module to fetch all groups, identifies empty groups,
-    determines their type, and exports the results to a specified CSV file. It includes progress updates and error handling.
+    This script:
+    - Fetches all Azure AD groups.
+    - Identifies empty groups (no members and no group memberships).
+    - Categorizes groups by type (e.g., Microsoft 365, Security).
+    - Checks if a group is on-premises synced or cloud-only.
+    - Exports the results to a CSV file.
 
 .PARAMETER OutputPath
     The full file path where the CSV report will be saved.
 
 .EXAMPLE
-    .\Export-EmptyGroups.ps1 -OutputPath C:\Temp\EmptyGroups.csv
-
-    This example saves the report to C:\Temp\EmptyGroups.csv.
-
-.NOTES
-    Author: Tycho Löke
-    Date: February 2025
-    Requires: Microsoft.Graph module
+    .\Export-AzureAD-EmptyGroups.ps1 -OutputPath "C:\Temp\EmptyGroups.csv"
 #>
 
 [CmdletBinding()]
@@ -35,7 +33,7 @@ if (-not (Get-Module -ListAvailable -Name Microsoft.Graph)) {
 # Import necessary submodule
 Import-Module Microsoft.Graph.Groups -ErrorAction Stop
 
-# Connect to Microsoft Graph (ensure the user is authenticated)
+# Connect to Microsoft Graph
 Write-Output "Connecting to Microsoft Graph..."
 Connect-MgGraph -ErrorAction Stop
 
@@ -55,10 +53,14 @@ foreach ($group in $Groups) {
     Write-Progress -Activity "Checking groups for empty membership" -Status "Processing group $currentGroup of $totalGroups" -PercentComplete (($currentGroup / $totalGroups) * 100)
 
     try {
-        # Fetch group members
+        # Check direct group members
         $members = Get-MgGroupMember -GroupId $group.Id -ErrorAction Stop
 
-        if ($members.Count -eq 0) {
+        # Check if the group has memberships in other groups
+        $groupMemberships = Get-MgGroupMemberOf -GroupId $group.Id -ErrorAction Stop
+
+        # Process only if the group has no direct members AND no group memberships
+        if (($members.Count -eq 0) -and ($groupMemberships.Count -eq 0)) {
             # Determine group type
             $groupType = if ($group.groupTypes -and $group.groupTypes -contains "Unified" -and $group.securityEnabled) { "Microsoft 365 (security-enabled)" }
             elseif ($group.groupTypes -and $group.groupTypes -contains "Unified" -and -not $group.securityEnabled) { "Microsoft 365" }
@@ -67,11 +69,17 @@ foreach ($group in $Groups) {
             elseif (-not ($group.groupTypes -and $group.mailEnabled)) { "Distribution" }
             else { "N/A" }
 
+            # Determine if the group is on-premises synced or cloud-only
+            $groupOrigin = if ($group.OnPremisesSyncEnabled -eq $true) { "On-Premises" }
+            elseif ($group.OnPremisesSyncEnabled -eq $false) { "Cloud-Only" }
+            else { "Unknown" }
+
             # Add group to report
             $Report.Add([PSCustomObject]@{
                 DisplayName = $group.DisplayName
                 Id          = $group.Id
                 GroupType   = $groupType
+                GroupOrigin = $groupOrigin
             })
         }
     }
