@@ -1,0 +1,1 @@
+# azure-ad-empty-groups-exporter
