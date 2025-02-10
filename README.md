@@ -2,12 +2,13 @@
 
 This **PowerShell script**, authored by **Tycho Löke**, automates the process of identifying and exporting **empty groups** from **Microsoft Entra ID (Azure AD)** using the **Microsoft Graph API**.  
 
-The results are saved to a **CSV file**, making it easy to analyze and clean up unused groups in your directory.
+The results are saved to a **CSV file**, making it easy to analyze and clean up unused groups in your directory. Now includes support for identifying groups with **nested memberships** to prevent accidental deletions.
 
 ---
 
 ## 📌 Features  
 ✅ **Automated Empty Group Retrieval** – Fetches all Azure AD groups and identifies those with **no members**.  
+✅ **Excludes Nested Memberships** – Ensures groups that are members of other groups are excluded from the report.  
 ✅ **Detailed Group Classification** – Categorizes groups into types like **Microsoft 365**, **Security**, or **Distribution**.  
 ✅ **Real-Time Updates** – Displays progress as it processes each group.  
 ✅ **Customizable Export Path** – Save the report to a location of your choice.  
@@ -53,7 +54,7 @@ Run the script using:
 ### **5️⃣ What Happens Next?**  
 ✅ The script **checks for required modules** and installs them if missing.  
 ✅ It **connects to Microsoft Graph** via pop-up login.  
-✅ Retrieves **all Azure AD groups** and **filters out empty ones**.  
+✅ Retrieves **all Azure AD groups** and identifies empty groups (with no direct members or nested memberships).  
 ✅ **Classifies each group** by type and compiles a report.  
 ✅ Saves the report to the specified file path (e.g., `C:\Temp\EmptyGroups.csv`).  
 
@@ -104,3 +105,20 @@ This project is licensed under the **MIT License** – feel free to use, modify,
 
 **Tycho Löke**  
 GitHub: [TychoLoke](https://github.com/TychoLoke)
+
+---
+
+## 📋 Change Log  
+
+### **v1.1.0** (February 2025)  
+- Added support for **nested memberships**:
+  - Groups that are members of other groups are now excluded from the empty groups report.  
+  - Ensures that groups involved in nested relationships are not accidentally flagged for cleanup.  
+- Enhanced error handling and progress updates.  
+
+### **v1.0.0** (February 2025)  
+- Initial release of the script:
+  - Fetches all Azure AD groups.  
+  - Identifies empty groups (no direct members).  
+  - Categorizes groups by type (Microsoft 365, Security, Distribution, etc.).  
+  - Exports results to a CSV file.  
