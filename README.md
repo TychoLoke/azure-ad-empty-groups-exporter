@@ -2,7 +2,7 @@
 
 This **PowerShell script**, authored by **Tycho Löke**, automates the process of identifying and exporting **empty groups** from **Microsoft Entra ID (Azure AD)** using the **Microsoft Graph API**.  
 
-The results are saved to a **CSV file**, making it easy to analyze and clean up unused groups in your directory. Now includes support for identifying groups with **nested memberships** to prevent accidental deletions.
+The results are saved to a **CSV file**, making it easy to analyze and clean up unused groups in your directory. Now includes support for identifying groups with **nested memberships** and distinguishing between **on-premises** and **cloud-only** groups.
 
 ---
 
@@ -10,6 +10,7 @@ The results are saved to a **CSV file**, making it easy to analyze and clean up 
 ✅ **Automated Empty Group Retrieval** – Fetches all Azure AD groups and identifies those with **no members**.  
 ✅ **Excludes Nested Memberships** – Ensures groups that are members of other groups are excluded from the report.  
 ✅ **Detailed Group Classification** – Categorizes groups into types like **Microsoft 365**, **Security**, or **Distribution**.  
+✅ **On-Premises vs. Cloud-Only Groups** – Classifies each group as either **On-Premises**, **Cloud-Only**, or **Unknown**.  
 ✅ **Real-Time Updates** – Displays progress as it processes each group.  
 ✅ **Customizable Export Path** – Save the report to a location of your choice.  
 ✅ **Error Handling** – Skips inaccessible groups and logs warnings without interrupting the script.  
@@ -55,7 +56,7 @@ Run the script using:
 ✅ The script **checks for required modules** and installs them if missing.  
 ✅ It **connects to Microsoft Graph** via pop-up login.  
 ✅ Retrieves **all Azure AD groups** and identifies empty groups (with no direct members or nested memberships).  
-✅ **Classifies each group** by type and compiles a report.  
+✅ **Classifies each group** by type and origin (On-Premises or Cloud-Only).  
 ✅ Saves the report to the specified file path (e.g., `C:\Temp\EmptyGroups.csv`).  
 
 ---
@@ -110,15 +111,25 @@ GitHub: [TychoLoke](https://github.com/TychoLoke)
 
 ## 📋 Change Log  
 
+### **v1.2.0** (February 2025)  
+- **Added On-Premises vs. Cloud-Only Classification**:  
+   - Groups are now classified as **On-Premises**, **Cloud-Only**, or **Unknown** based on the `OnPremisesSyncEnabled` property.  
+   - This helps to distinguish between groups synced from on-premises environments and those created in the cloud.  
+
+- **Improved Nested Membership Handling**:  
+   - Groups that are members of other groups are excluded from the report.  
+
+- **Enhanced Progress Updates and Logging**:  
+   - Progress bar updated for better tracking during long executions.  
+
 ### **v1.1.0** (February 2025)  
-- Added support for **nested memberships**:
-  - Groups that are members of other groups are now excluded from the empty groups report.  
-  - Ensures that groups involved in nested relationships are not accidentally flagged for cleanup.  
-- Enhanced error handling and progress updates.  
+- Added support for **nested memberships**:  
+   - Groups that are members of other groups are now excluded from the empty groups report.  
+   - Ensures that groups involved in nested relationships are not accidentally flagged for cleanup.  
 
 ### **v1.0.0** (February 2025)  
-- Initial release of the script:
-  - Fetches all Azure AD groups.  
-  - Identifies empty groups (no direct members).  
-  - Categorizes groups by type (Microsoft 365, Security, Distribution, etc.).  
-  - Exports results to a CSV file.  
+- Initial release of the script:  
+   - Fetches all Azure AD groups.  
+   - Identifies empty groups (no direct members).  
+   - Categorizes groups by type (Microsoft 365, Security, Distribution, etc.).  
+   - Exports results to a CSV file.  
