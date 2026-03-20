@@ -1,5 +1,9 @@
 # Azure AD Empty Groups Exporter
 
+[![Release](https://img.shields.io/github/v/release/TychoLoke/azure-ad-empty-groups-exporter)](https://github.com/TychoLoke/azure-ad-empty-groups-exporter/releases)
+[![CI](https://img.shields.io/github/actions/workflow/status/TychoLoke/azure-ad-empty-groups-exporter/powershell-ci.yml?branch=main)](https://github.com/TychoLoke/azure-ad-empty-groups-exporter/actions/workflows/powershell-ci.yml)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 This PowerShell script finds empty Microsoft Entra groups and exports them to CSV for cleanup review.
 
 ## What It Does
