@@ -8,7 +8,7 @@ The results are saved to a **CSV file**, making it easy to analyze and clean up 
 
 ## 📌 Features  
 ✅ **Automated Empty Group Retrieval** – Fetches all Azure AD groups and identifies those with **no members**.  
-✅ **Excludes Nested Memberships** – Ensures groups that are members of other groups are excluded from the report.  
+✅ **Optional Nested Membership Checks** – Can exclude groups that are members of other groups when requested.
 ✅ **Detailed Group Classification** – Categorizes groups into types like **Microsoft 365**, **Security**, or **Distribution**.  
 ✅ **On-Premises vs. Cloud-Only Groups** – Classifies each group as either **On-Premises**, **Cloud-Only**, or **Unknown**.  
 ✅ **Real-Time Updates** – Displays progress as it processes each group.  
@@ -21,8 +21,8 @@ The results are saved to a **CSV file**, making it easy to analyze and clean up 
 
 Before running the script, ensure you meet the following requirements:  
 
-- **Azure Active Directory (AAD)** – Your account must be linked to an Azure AD tenant.  
-- **Admin Role** – Requires **Group.Read.All** or higher permissions in AAD.  
+- **Microsoft Entra ID** – Your account must be linked to a tenant.
+- **Microsoft Graph Permissions** – Requires `Group.Read.All` and `Directory.Read.All`.
 - **Microsoft Graph PowerShell Module** – Installed automatically by the script if missing.  
 - **PowerShell Execution Policy** – Must allow script execution (`Set-ExecutionPolicy RemoteSigned`).  
 
@@ -48,14 +48,20 @@ Run the script using:
 .\Export-AzureAD-EmptyGroups.ps1 -OutputPath "C:\Temp\EmptyGroups.csv"
 ```
 
+If you also want to exclude groups that are members of other groups:
+
+```powershell
+.\Export-AzureAD-EmptyGroups.ps1 -OutputPath "C:\Temp\EmptyGroups.csv" -IncludeMembershipChecks
+```
+
 ### **4️⃣ Authenticate with Microsoft Graph**  
-- A **pop-up login window** will appear.
-- Sign in with your **Global Admin** or **Group Administrator** credentials.
+- An interactive Microsoft Graph sign-in prompt will appear.
+- Sign in with an account that can use the required delegated Graph scopes.
 
 ### **5️⃣ What Happens Next?**  
 ✅ The script **checks for required modules** and installs them if missing.  
 ✅ It **connects to Microsoft Graph** via pop-up login.  
-✅ Retrieves **all Azure AD groups** and identifies empty groups (with no direct members or nested memberships).  
+✅ Retrieves **all Entra groups** and identifies empty groups.
 ✅ **Classifies each group** by type and origin (On-Premises or Cloud-Only).  
 ✅ Saves the report to the specified file path (e.g., `C:\Temp\EmptyGroups.csv`).  
 
@@ -65,6 +71,7 @@ Run the script using:
 - The script uses **`Microsoft.Graph.Groups`** instead of the full Microsoft Graph module to optimize performance.  
 - It provides **progress updates** for long-running operations (e.g., processing thousands of groups).  
 - The default export location can be customized using the `-OutputPath` parameter.  
+- Use `-IncludeMembershipChecks` if you want to exclude groups that are members of parent groups.
 
 ---
 
@@ -78,7 +85,7 @@ Install-Module Microsoft.Graph -Scope CurrentUser
 ```
 
 ### ❌ Script Fails to Authenticate?  
-Verify your account has **Global Admin** or **Group Administrator** privileges.  
+Verify your account can use the `Group.Read.All` and `Directory.Read.All` Microsoft Graph scopes.
 
 ### ❌ Script Hangs or Freezes?  
 If processing thousands of groups, allow the script time to complete. Progress is displayed in the PowerShell window.  

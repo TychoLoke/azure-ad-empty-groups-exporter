@@ -21,7 +21,9 @@
 [CmdletBinding()]
 param (
     [Parameter(Mandatory = $true, HelpMessage = "Specify the output file path for the CSV report.")]
-    [string]$OutputPath
+    [string]$OutputPath,
+
+    [switch]$IncludeMembershipChecks
 )
 
 # Ensure Microsoft.Graph module is installed
@@ -35,11 +37,11 @@ Import-Module Microsoft.Graph.Groups -ErrorAction Stop
 
 # Connect to Microsoft Graph
 Write-Output "Connecting to Microsoft Graph..."
-Connect-MgGraph -ErrorAction Stop
+Connect-MgGraph -Scopes @("Group.Read.All", "Directory.Read.All") -NoWelcome -ErrorAction Stop
 
 # Fetch all groups
 Write-Output "Fetching all groups from Microsoft Entra ID..."
-$Groups = Get-MgGroup -All
+$Groups = Get-MgGroup -All -Property "id,displayName,groupTypes,securityEnabled,mailEnabled,onPremisesSyncEnabled"
 $Report = [System.Collections.Generic.List[Object]]::new()
 
 $totalGroups = $Groups.Count
@@ -54,10 +56,14 @@ foreach ($group in $Groups) {
 
     try {
         # Check direct group members
-        $members = Get-MgGroupMember -GroupId $group.Id -ErrorAction Stop
+        $members = @(Get-MgGroupMember -GroupId $group.Id -All -ErrorAction Stop)
 
         # Check if the group has memberships in other groups
-        $groupMemberships = Get-MgGroupMemberOf -GroupId $group.Id -ErrorAction Stop
+        $groupMemberships = if ($IncludeMembershipChecks) {
+            @(Get-MgGroupMemberOf -GroupId $group.Id -All -ErrorAction Stop)
+        } else {
+            @()
+        }
 
         # Process only if the group has no direct members AND no group memberships
         if (($members.Count -eq 0) -and ($groupMemberships.Count -eq 0)) {
@@ -66,7 +72,7 @@ foreach ($group in $Groups) {
             elseif ($group.groupTypes -and $group.groupTypes -contains "Unified" -and -not $group.securityEnabled) { "Microsoft 365" }
             elseif (-not ($group.groupTypes -and $group.groupTypes -contains "Unified") -and $group.securityEnabled -and $group.mailEnabled) { "Mail-enabled security" }
             elseif (-not ($group.groupTypes -and $group.groupTypes -contains "Unified") -and $group.securityEnabled) { "Security" }
-            elseif (-not ($group.groupTypes -and $group.mailEnabled)) { "Distribution" }
+            elseif (-not ($group.groupTypes -and $group.groupTypes -contains "Unified") -and $group.mailEnabled -and -not $group.securityEnabled) { "Distribution" }
             else { "N/A" }
 
             # Determine if the group is on-premises synced or cloud-only
@@ -80,6 +86,8 @@ foreach ($group in $Groups) {
                 Id          = $group.Id
                 GroupType   = $groupType
                 GroupOrigin = $groupOrigin
+                DirectMembersCount = $members.Count
+                ParentGroupMemberships = $groupMemberships.Count
             })
         }
     }
@@ -97,3 +105,4 @@ if (-not (Test-Path (Split-Path -Path $OutputPath))) {
 $Report | Export-Csv -Path $OutputPath -NoTypeInformation -Encoding UTF8
 
 Write-Output "✅ Report successfully exported to: $OutputPath"
+Disconnect-MgGraph | Out-Null
