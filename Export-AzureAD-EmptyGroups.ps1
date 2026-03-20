@@ -26,7 +26,7 @@ param (
     [switch]$IncludeMembershipChecks
 )
 
-function Initialize-PowerShellAdminHelpers {
+function Initialize-PowerShellAdminHelper {
     $moduleName = "PowerShellAdminHelpers"
 
     if (-not (Get-Module -ListAvailable -Name $moduleName)) {
@@ -38,7 +38,7 @@ function Initialize-PowerShellAdminHelpers {
     Import-Module -Name $moduleName -Force -ErrorAction Stop
 }
 
-Initialize-PowerShellAdminHelpers
+Initialize-PowerShellAdminHelper
 Ensure-OutputDirectory -Path (Split-Path -Path $OutputPath -Parent)
 Ensure-Module -ModuleName "Microsoft.Graph.Groups"
 
