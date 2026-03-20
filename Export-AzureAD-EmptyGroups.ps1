@@ -26,18 +26,24 @@ param (
     [switch]$IncludeMembershipChecks
 )
 
-# Ensure Microsoft.Graph module is installed
-if (-not (Get-Module -ListAvailable -Name Microsoft.Graph)) {
-    Write-Output "Installing Microsoft.Graph module..."
-    Install-Module Microsoft.Graph -Force -Scope CurrentUser
+function Initialize-PowerShellAdminHelpers {
+    $moduleName = "PowerShellAdminHelpers"
+
+    if (-not (Get-Module -ListAvailable -Name $moduleName)) {
+        $installerPath = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath "Install-PowerShellAdminHelpers.ps1"
+        Invoke-WebRequest -Uri "https://raw.githubusercontent.com/TychoLoke/powershell-admin-helpers/main/Install-PowerShellAdminHelpers.ps1" -OutFile $installerPath
+        & $installerPath
+    }
+
+    Import-Module -Name $moduleName -Force -ErrorAction Stop
 }
 
-# Import necessary submodule
-Import-Module Microsoft.Graph.Groups -ErrorAction Stop
+Initialize-PowerShellAdminHelpers
+Ensure-OutputDirectory -Path (Split-Path -Path $OutputPath -Parent)
+Ensure-Module -ModuleName "Microsoft.Graph.Groups"
 
-# Connect to Microsoft Graph
 Write-Output "Connecting to Microsoft Graph..."
-Connect-MgGraph -Scopes @("Group.Read.All", "Directory.Read.All") -NoWelcome -ErrorAction Stop
+Connect-GraphWithScopes -Scopes @("Group.Read.All", "Directory.Read.All")
 
 # Fetch all groups
 Write-Output "Fetching all groups from Microsoft Entra ID..."
@@ -96,13 +102,11 @@ foreach ($group in $Groups) {
     }
 }
 
-# Export report to CSV
 Write-Output "Exporting report to: $OutputPath..."
-if (-not (Test-Path (Split-Path -Path $OutputPath))) {
-    New-Item -ItemType Directory -Path (Split-Path -Path $OutputPath) -Force | Out-Null
-}
-
 $Report | Export-Csv -Path $OutputPath -NoTypeInformation -Encoding UTF8
 
 Write-Output "✅ Report successfully exported to: $OutputPath"
-Disconnect-MgGraph | Out-Null
+
+if (Get-MgContext) {
+    Disconnect-MgGraph | Out-Null
+}
